@@ -1,9 +1,10 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { Car, Menu, X, LogOut, LayoutDashboard, ShieldCheck } from 'lucide-react';
+import { Menu, X, LogOut, LayoutDashboard, ShieldCheck, Crown } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import ThemeToggle from './ThemeToggle';
 
@@ -30,10 +31,12 @@ export default function Navbar() {
     <header className="sticky top-0 z-40 border-b border-border bg-surface/90 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
         <Link href="/" className="flex items-center gap-2 font-bold text-brand">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand text-white">
-            <Car size={18} />
+          <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-white ring-1 ring-border">
+            <Image src="/logo-icon.png" alt="Rhema Driving School" fill sizes="40px" className="object-contain p-0.5" priority />
           </span>
-          <span className="text-lg">RoadReady GH</span>
+          <span className="text-lg leading-tight">
+            Rhema <span className="hidden sm:inline">Driving School</span>
+          </span>
         </Link>
 
         <nav className="hidden items-center gap-6 md:flex">
@@ -64,6 +67,22 @@ export default function Navbar() {
           <ThemeToggle />
           {!loading && user ? (
             <>
+              {user.role !== 'admin' &&
+                (user.subscription?.active ? (
+                  <Link
+                    href="/subscribe"
+                    className="flex items-center gap-1 rounded-full bg-accent/15 px-3 py-1.5 text-xs font-semibold text-accent"
+                  >
+                    <Crown size={13} /> {user.subscription.daysRemaining}d left
+                  </Link>
+                ) : (
+                  <Link
+                    href="/subscribe"
+                    className="flex items-center gap-1 rounded-full bg-accent px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90"
+                  >
+                    <Crown size={13} /> Subscribe
+                  </Link>
+                ))}
               <Link
                 href="/dashboard"
                 className="flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-sm font-medium transition hover:bg-surface-muted"
@@ -108,6 +127,18 @@ export default function Navbar() {
             {user?.role === 'admin' && (
               <Link href="/admin" onClick={() => setOpen(false)} className="text-sm font-medium">
                 Admin
+              </Link>
+            )}
+            {user && user.role !== 'admin' && (
+              <Link
+                href="/subscribe"
+                onClick={() => setOpen(false)}
+                className={`flex w-fit items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold ${
+                  user.subscription?.active ? 'bg-accent/15 text-accent' : 'bg-accent text-white'
+                }`}
+              >
+                <Crown size={13} />{' '}
+                {user.subscription?.active ? `${user.subscription.daysRemaining}d left` : 'Subscribe'}
               </Link>
             )}
             <div className="flex items-center justify-between pt-2">

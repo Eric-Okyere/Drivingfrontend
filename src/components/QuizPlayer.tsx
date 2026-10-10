@@ -1,12 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import confetti from 'canvas-confetti';
-import { CheckCircle2, XCircle, PartyPopper, RotateCcw } from 'lucide-react';
+import { CheckCircle2, XCircle, PartyPopper, RotateCcw, Timer } from 'lucide-react';
 import { api } from '@/lib/api';
 import { QuizQuestion } from '@/lib/types';
 import { playCorrectSound, playWrongSound } from '@/lib/sounds';
 import ProgressBar from './ProgressBar';
+
+const QUESTION_TIME_SECONDS = 20;
 
 interface AnswerRecord {
   questionId: string;
@@ -17,6 +19,7 @@ interface FeedbackState {
   correct: boolean;
   correctIndex: number;
   explanation: string;
+  timedOut?: boolean;
 }
 
 interface FinalResult {
@@ -53,12 +56,67 @@ export default function QuizPlayer({
   const [submitting, setSubmitting] = useState(false);
   const [finalResult, setFinalResult] = useState<FinalResult | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [timeLeft, setTimeLeft] = useState(QUESTION_TIME_SECONDS);
+
+  const hasAnsweredRef = useRef(false);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const current = questions[currentIndex];
   const isLast = currentIndex === questions.length - 1;
 
+  // Reset the 20-second clock every time a new question comes up.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setTimeLeft(QUESTION_TIME_SECONDS);
+    hasAnsweredRef.current = false;
+  }, [currentIndex]);
+
+  const handleTimeout = useCallback(async () => {
+    if (hasAnsweredRef.current) return;
+    hasAnsweredRef.current = true;
+    setChecking(true);
+    setErrorMsg(null);
+    try {
+      // -1 never matches a real choice index, so the server always grades it as incorrect
+      // and still returns the correct answer + explanation to show the student.
+      const result = await api.post<{ correct: boolean; correctIndex: number; explanation: string }>(
+        '/questions/answer',
+        { questionId: current.id, selectedIndex: -1 }
+      );
+      setFeedback({ ...result, timedOut: true });
+      setAnswers((prev) => [...prev, { questionId: current.id, selectedIndex: -1 }]);
+      playWrongSound();
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : 'Could not check your answer');
+    } finally {
+      setChecking(false);
+    }
+  }, [current]);
+
+  // The countdown itself — paused once the question has been answered or is being checked.
+  useEffect(() => {
+    if (feedback || checking) {
+      if (timerRef.current) clearInterval(timerRef.current);
+      return;
+    }
+    timerRef.current = setInterval(() => {
+      setTimeLeft((t) => {
+        if (t <= 1) {
+          if (timerRef.current) clearInterval(timerRef.current);
+          handleTimeout();
+          return 0;
+        }
+        return t - 1;
+      });
+    }, 1000);
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [currentIndex, feedback, checking, handleTimeout]);
+
   const handleSelect = async (index: number) => {
-    if (feedback || checking) return; // already answered this question
+    if (feedback || checking || hasAnsweredRef.current) return; // already answered this question
+    hasAnsweredRef.current = true;
     setSelected(index);
     setChecking(true);
     setErrorMsg(null);
@@ -76,6 +134,7 @@ export default function QuizPlayer({
       }
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : 'Could not check your answer');
+      hasAnsweredRef.current = false;
     } finally {
       setChecking(false);
     }
@@ -160,15 +219,36 @@ export default function QuizPlayer({
     );
   }
 
+  const timeRunningLow = timeLeft <= 5;
+
   return (
     <div className="rounded-2xl border border-border bg-surface p-6 shadow-sm sm:p-8">
       <div className="mb-4 flex items-center justify-between text-sm text-foreground/60">
         <span>
           Question {currentIndex + 1} of {questions.length}
         </span>
+        {!feedback && (
+          <span
+            className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold tabular-nums ${
+              timeRunningLow ? 'bg-danger/10 text-danger' : 'bg-brand/10 text-brand'
+            }`}
+          >
+            <Timer size={13} /> {timeLeft}s
+          </span>
+        )}
         <span>{Math.round(((currentIndex + (feedback ? 1 : 0)) / questions.length) * 100)}%</span>
       </div>
       <ProgressBar percent={((currentIndex + (feedback ? 1 : 0)) / questions.length) * 100} />
+
+      {!feedback && (
+        <div className="mt-2">
+          <ProgressBar
+            percent={(timeLeft / QUESTION_TIME_SECONDS) * 100}
+            colorClass={timeRunningLow ? 'bg-danger' : 'bg-brand'}
+            heightClass="h-1"
+          />
+        </div>
+      )}
 
       <h3 className="mt-6 text-lg font-semibold">{current.prompt}</h3>
 
@@ -221,7 +301,8 @@ export default function QuizPlayer({
           ) : (
             <>
               <p className="font-semibold text-danger">
-                Not quite — the correct answer is: &ldquo;{current.choices[feedback.correctIndex]}&rdquo;
+                {feedback.timedOut ? "Time's up! " : 'Not quite — '}
+                the correct answer is: &ldquo;{current.choices[feedback.correctIndex]}&rdquo;
               </p>
               <p className="mt-1 text-foreground/70">{feedback.explanation}</p>
             </>

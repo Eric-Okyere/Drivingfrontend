@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Users, BookOpen, ArrowRight } from 'lucide-react';
+import { Users, BookOpen, ArrowRight, Crown } from 'lucide-react';
 import { api } from '@/lib/api';
 import RequireAuth from '@/components/RequireAuth';
 
@@ -32,7 +32,7 @@ function AdminContent() {
       <h1 className="text-3xl font-bold">Admin dashboard</h1>
       <p className="mt-1 text-foreground/60">Manage lessons, questions, and see how students are progressing.</p>
 
-      <div className="mt-8 grid gap-5 sm:grid-cols-2">
+      <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         <div className="rounded-2xl border border-border bg-surface p-5">
           <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-brand/10 text-brand">
             <Users size={18} />
@@ -50,6 +50,19 @@ function AdminContent() {
             </div>
             <p className="font-semibold">Manage lessons & questions</p>
             <p className="text-sm text-foreground/60">Create, edit and delete practical lessons and quiz questions</p>
+          </div>
+          <ArrowRight size={18} className="text-foreground/40" />
+        </Link>
+        <Link
+          href="/admin/subscriptions"
+          className="flex items-center justify-between rounded-2xl border border-border bg-surface p-5 transition hover:bg-surface-muted"
+        >
+          <div>
+            <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-accent/15 text-accent">
+              <Crown size={18} />
+            </div>
+            <p className="font-semibold">Subscriptions & payments</p>
+            <p className="text-sm text-foreground/60">Mark cash/MoMo payments as paid and review Paystack history</p>
           </div>
           <ArrowRight size={18} className="text-foreground/40" />
         </Link>

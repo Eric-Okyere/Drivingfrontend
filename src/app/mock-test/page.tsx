@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import confetti from 'canvas-confetti';
-import { Timer, AlertCircle, CheckCircle2, XCircle, Award, RotateCcw } from 'lucide-react';
-import { api } from '@/lib/api';
+import { Timer, AlertCircle, CheckCircle2, XCircle, Award, RotateCcw, Crown } from 'lucide-react';
+import { api, ApiError } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import ProgressBar from '@/components/ProgressBar';
 
@@ -119,11 +119,17 @@ export default function MockTestPage() {
       setCertIssued(false);
       setPhase('in-progress');
     } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : 'Could not start the mock test');
+      if (err instanceof ApiError && err.status === 402) {
+        setErrorMsg(null);
+      } else {
+        setErrorMsg(err instanceof Error ? err.message : 'Could not start the mock test');
+      }
     } finally {
       setLoading(false);
     }
   };
+
+  const needsSubscription = !!user && user.role !== 'admin' && !user.subscription?.active;
 
   const selectAnswer = (questionId: string, index: number) => {
     setAnswersMap((prev) => ({ ...prev, [questionId]: index }));
@@ -135,7 +141,11 @@ export default function MockTestPage() {
       await api.post('/certificates', { mockResultId: result.mockResultId });
       setCertIssued(true);
     } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : 'Could not issue certificate');
+      if (err instanceof ApiError && err.status === 402) {
+        setErrorMsg('Your subscription has ended — resubscribe to issue this certificate.');
+      } else {
+        setErrorMsg(err instanceof Error ? err.message : 'Could not issue certificate');
+      }
     }
   };
 
@@ -157,6 +167,20 @@ export default function MockTestPage() {
               Log in
             </Link>{' '}
             to take the mock test and track your results.
+          </div>
+        ) : needsSubscription ? (
+          <div className="mt-8 rounded-2xl border-2 border-dashed border-accent/40 bg-accent/5 p-6 text-center">
+            <Crown size={24} className="mx-auto text-accent" />
+            <p className="mt-2 font-semibold">The mock test is part of the Rhema subscription</p>
+            <p className="mt-1 text-sm text-foreground/60">
+              Subscribe to unlock the full 40-question mock test and earn your certificate.
+            </p>
+            <Link
+              href="/subscribe"
+              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-accent px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-accent/30 transition hover:opacity-90"
+            >
+              <Crown size={16} /> See subscription pricing
+            </Link>
           </div>
         ) : (
           <>

@@ -5,13 +5,15 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { LogIn } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import GoogleSignInButton from '@/components/GoogleSignInButton';
 
 export default function LoginPage() {
-  const { login, error, setError } = useAuth();
+  const { login, loginWithGoogle, error, setError } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [googleSubmitting, setGoogleSubmitting] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -24,6 +26,19 @@ export default function LoginPage() {
       // error already set in context
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleGoogleCredential = async (credential: string) => {
+    setError(null);
+    setGoogleSubmitting(true);
+    try {
+      await loginWithGoogle(credential);
+      router.push('/dashboard');
+    } catch {
+      // error already set in context
+    } finally {
+      setGoogleSubmitting(false);
     }
   };
 
@@ -40,6 +55,14 @@ export default function LoginPage() {
         {error && (
           <div className="mb-4 rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">{error}</div>
         )}
+
+        <div className={googleSubmitting ? 'pointer-events-none opacity-60' : ''}>
+          <GoogleSignInButton onCredential={handleGoogleCredential} text="signin_with" />
+        </div>
+
+        <div className="my-5 flex items-center gap-3 text-xs font-medium uppercase tracking-wide text-foreground/40">
+          <span className="h-px flex-1 bg-border" /> or <span className="h-px flex-1 bg-border" />
+        </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Clock, Target, ListChecks, AlertTriangle, ShieldAlert, PlayCircle } from 'lucide-react';
+import { ArrowLeft, Clock, Target, ListChecks, AlertTriangle, ShieldAlert, PlayCircle, Crown } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Lesson, QuizQuestion } from '@/lib/types';
 import { useAuth } from '@/context/AuthContext';
@@ -17,13 +17,17 @@ export default function LessonDetailClient({ slug }: { slug: string }) {
   const [showQuiz, setShowQuiz] = useState(false);
 
   useEffect(() => {
-    Promise.all([
-      api.get<{ lesson: Lesson }>(`/lessons/${slug}`),
-      api.get<{ questions: QuizQuestion[] }>(`/questions/lesson/${slug}`),
-    ])
-      .then(([lessonData, questionData]) => {
+    api
+      .get<{ lesson: Lesson }>(`/lessons/${slug}`)
+      .then((lessonData) => {
         setLesson(lessonData.lesson);
-        setQuestions(questionData.questions);
+        // A locked lesson's questions are paywalled server-side too — don't even try to fetch
+        // them, so a locked lesson never shows an error for something it's not meant to have.
+        if (!lessonData.lesson.locked) {
+          return api
+            .get<{ questions: QuizQuestion[] }>(`/questions/lesson/${slug}`)
+            .then((questionData) => setQuestions(questionData.questions));
+        }
       })
       .catch((err) => setErrorMsg(err instanceof Error ? err.message : 'Failed to load lesson'))
       .finally(() => setLoading(false));
@@ -46,6 +50,57 @@ export default function LessonDetailClient({ slug }: { slug: string }) {
         <Link href="/lessons" className="mt-4 inline-block text-brand">
           Back to lessons
         </Link>
+      </div>
+    );
+  }
+
+  if (lesson.lockReason === 'prerequisite') {
+    return (
+      <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+        <Link href="/lessons" className="mb-6 flex items-center gap-1 text-sm text-foreground/60 hover:text-brand">
+          <ArrowLeft size={15} /> Back to lessons
+        </Link>
+        <h1 className="mt-3 text-3xl font-bold">{lesson.title}</h1>
+        <p className="mt-5 text-foreground/80">{lesson.summary}</p>
+        <div className="mt-8 rounded-2xl border border-border bg-surface-muted p-8 text-center">
+          <h2 className="text-lg font-bold">Complete the previous category first</h2>
+          <p className="mx-auto mt-2 max-w-md text-sm text-foreground/60">
+            This lesson unlocks once you&apos;ve passed every lesson in the category before it.
+          </p>
+          <Link href="/lessons" className="mt-4 inline-block text-sm font-semibold text-brand">
+            Back to your lessons
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (lesson.lockReason === 'subscription') {
+    return (
+      <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+        <Link href="/lessons" className="mb-6 flex items-center gap-1 text-sm text-foreground/60 hover:text-brand">
+          <ArrowLeft size={15} /> Back to lessons
+        </Link>
+        <h1 className="mt-3 text-3xl font-bold">{lesson.title}</h1>
+        <div className="mt-2 flex items-center gap-1 text-sm text-foreground/60">
+          <Clock size={14} /> {lesson.durationMinutes} min
+        </div>
+        <p className="mt-5 text-foreground/80">{lesson.summary}</p>
+
+        <div className="mt-8 rounded-2xl border-2 border-dashed border-accent/40 bg-accent/5 p-8 text-center">
+          <Crown size={28} className="mx-auto text-accent" />
+          <h2 className="mt-3 text-xl font-bold">This lesson is for subscribed students</h2>
+          <p className="mx-auto mt-2 max-w-md text-sm text-foreground/60">
+            You&apos;ve seen the free lessons — subscribe to unlock this one, the full lesson
+            library, the mock DVLA test, and your certificate.
+          </p>
+          <Link
+            href="/subscribe"
+            className="mt-5 inline-flex items-center gap-2 rounded-xl bg-accent px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-accent/30 transition hover:opacity-90"
+          >
+            <Crown size={16} /> See subscription pricing
+          </Link>
+        </div>
       </div>
     );
   }

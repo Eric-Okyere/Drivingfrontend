@@ -6,16 +6,24 @@ export interface Badge {
   earnedAt?: string;
 }
 
+export interface SubscriptionStatus {
+  active: boolean;
+  expiresAt: string | null;
+  daysRemaining: number;
+}
+
 export interface User {
   id: string;
   name: string;
   email: string;
   role: 'student' | 'admin';
+  authProvider?: 'local' | 'google';
   licenseClassGoal: string;
   streakCount: number;
   longestStreak: number;
   totalPoints: number;
   badges: Badge[];
+  subscription?: SubscriptionStatus;
   createdAt?: string;
 }
 
@@ -48,6 +56,26 @@ export interface Lesson {
   published: boolean;
   progress?: LessonProgress | null;
   locked?: boolean;
+  lockReason?: 'prerequisite' | 'subscription' | null;
+  isFree?: boolean;
+}
+
+export interface SubscriptionConfig {
+  priceGHS: number;
+  periodDays: number;
+  currency: string;
+}
+
+export interface PaymentHistoryItem {
+  _id: string;
+  amountGHS: number;
+  currency: string;
+  method: 'paystack' | 'manual';
+  status: 'pending' | 'success' | 'failed';
+  periodStart?: string;
+  periodEnd?: string;
+  note?: string;
+  createdAt: string;
 }
 
 export interface QuizQuestion {

@@ -5,9 +5,14 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
-  title: "RoadReady GH — Practice for Ghana's DVLA Driving Test",
+  title: "Rhema Driving School — Online Practice Portal",
   description:
-    "Practice Beginner, Intermediate and Advanced driving lessons built to guide you through Ghana's DVLA practical and theory tests.",
+    "Rhema Driving School's own practice portal: Beginner, Intermediate and Advanced lessons, 300+ quiz questions, and a full mock DVLA test — built and maintained by Rhema, for Rhema students.",
+  icons: {
+    icon: "/logo-icon.png",
+    apple: "/logo-icon.png",
+    shortcut: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

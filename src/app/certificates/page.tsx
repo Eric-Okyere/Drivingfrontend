@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { Award, Printer } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
@@ -42,20 +43,24 @@ function CertificatesContent() {
               key={cert._id}
               className="relative overflow-hidden rounded-2xl border-4 border-double border-brand bg-surface p-8 text-center shadow-sm print:break-after-page"
             >
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-brand">RoadReady GH</p>
+              <div className="mx-auto h-14 w-36 relative">
+                <Image src="/logo-full.png" alt="Rhema Driving School" fill sizes="144px" className="object-contain" />
+              </div>
+              <p className="mt-2 text-xs font-semibold uppercase tracking-[0.3em] text-brand">Rhema Driving School</p>
               <h2 className="mt-4 text-2xl font-bold">Certificate of Mock Test Achievement</h2>
               <p className="mt-4 text-foreground/70">This certifies that</p>
               <p className="mt-1 text-xl font-bold text-brand">{user?.name}</p>
               <p className="mt-3 text-foreground/70">
-                scored <span className="font-bold text-success">{cert.scorePercent}%</span> on the RoadReady GH mock
-                DVLA computer-based test for a Class {cert.licenseClassGoal} license goal.
+                scored <span className="font-bold text-success">{cert.scorePercent}%</span> on Rhema Driving
+                School&apos;s mock DVLA computer-based test for a Class {cert.licenseClassGoal} license goal.
               </p>
               <p className="mt-6 text-xs text-foreground/50">
                 Serial: {cert.serialNumber} &middot; Issued {new Date(cert.issuedAt).toLocaleDateString()}
               </p>
               <p className="mx-auto mt-6 max-w-md text-xs text-foreground/40">
-                This certificate reflects readiness demonstrated in RoadReady GH practice tests. It is not an
-                official DVLA document and does not replace the official Ghana driver&apos;s license examination.
+                This certificate reflects readiness demonstrated in Rhema Driving School practice tests. It is
+                not an official DVLA document and does not replace the official Ghana driver&apos;s license
+                examination.
               </p>
               <button
                 onClick={() => window.print()}
