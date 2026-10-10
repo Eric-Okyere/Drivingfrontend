@@ -6,7 +6,7 @@ import { CheckCircle2, XCircle, PartyPopper, RotateCcw, Timer } from 'lucide-rea
 import { api } from '@/lib/api';
 import { QuizQuestion } from '@/lib/types';
 import { playCorrectSound, playWrongSound } from '@/lib/sounds';
-import { celebrateCorrectAnswer, showWrongAnswerEmojis } from '@/lib/emojiBurst';
+import { celebrateCorrectAnswer } from '@/lib/emojiBurst';
 import ProgressBar from './ProgressBar';
 
 const QUESTION_TIME_SECONDS = 20;
@@ -87,7 +87,6 @@ export default function QuizPlayer({
       setFeedback({ ...result, timedOut: true });
       setAnswers((prev) => [...prev, { questionId: current.id, selectedIndex: -1 }]);
       playWrongSound();
-      showWrongAnswerEmojis();
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : 'Could not check your answer');
     } finally {
@@ -134,7 +133,6 @@ export default function QuizPlayer({
         celebrateCorrectAnswer();
       } else {
         playWrongSound();
-        showWrongAnswerEmojis();
       }
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : 'Could not check your answer');
