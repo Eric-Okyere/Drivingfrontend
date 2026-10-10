@@ -6,6 +6,7 @@ import { CheckCircle2, XCircle, PartyPopper, RotateCcw, Timer } from 'lucide-rea
 import { api } from '@/lib/api';
 import { QuizQuestion } from '@/lib/types';
 import { playCorrectSound, playWrongSound } from '@/lib/sounds';
+import { celebrateCorrectAnswer, showWrongAnswerEmojis } from '@/lib/emojiBurst';
 import ProgressBar from './ProgressBar';
 
 const QUESTION_TIME_SECONDS = 20;
@@ -86,6 +87,7 @@ export default function QuizPlayer({
       setFeedback({ ...result, timedOut: true });
       setAnswers((prev) => [...prev, { questionId: current.id, selectedIndex: -1 }]);
       playWrongSound();
+      showWrongAnswerEmojis();
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : 'Could not check your answer');
     } finally {
@@ -129,8 +131,10 @@ export default function QuizPlayer({
       setAnswers((prev) => [...prev, { questionId: current.id, selectedIndex: index }]);
       if (result.correct) {
         playCorrectSound();
+        celebrateCorrectAnswer();
       } else {
         playWrongSound();
+        showWrongAnswerEmojis();
       }
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : 'Could not check your answer');
@@ -285,6 +289,14 @@ export default function QuizPlayer({
                   👏
                 </span>
               )}
+              {feedback && isWrongSelected && (
+                <span
+                  key={currentIndex}
+                  className="animate-float-emoji absolute -top-6 right-4 text-2xl"
+                >
+                  😢
+                </span>
+              )}
             </button>
           );
         })}
@@ -297,11 +309,11 @@ export default function QuizPlayer({
           }`}
         >
           {feedback.correct ? (
-            <p className="font-semibold">Correct! 👏 Well done.</p>
+            <p className="font-semibold">Correct! 🎉👏 Well done.</p>
           ) : (
             <>
               <p className="font-semibold text-danger">
-                {feedback.timedOut ? "Time's up! " : 'Not quite — '}
+                {feedback.timedOut ? "Time's up! 😢 " : 'Not quite — 😢 '}
                 the correct answer is: &ldquo;{current.choices[feedback.correctIndex]}&rdquo;
               </p>
               <p className="mt-1 text-foreground/70">{feedback.explanation}</p>
