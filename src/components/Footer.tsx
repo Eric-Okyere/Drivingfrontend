@@ -3,6 +3,7 @@ import Image from 'next/image';
 export default function Footer() {
   return (
     <footer className="mt-16 border-t border-border py-8 text-center text-sm text-foreground/60">
+      
       <div className="mx-auto mb-2 flex h-16 w-44 items-center justify-center rounded-xl bg-white p-2 shadow-sm">
         <div className="relative h-full w-full">
           <Image src="/logo-full.png" alt="Rhema Driving School" fill sizes="176px" className="object-contain" />
