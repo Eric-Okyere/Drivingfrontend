@@ -281,12 +281,20 @@ export default function QuizPlayer({
               <span>{choice}</span>
               {isCorrectChoice && <CheckCircle2 size={18} className="text-success" />}
               {isWrongSelected && <XCircle size={18} className="text-danger" />}
-              {feedback && isCorrectChoice && (
+              {feedback && isCorrectChoice && feedback.correct && (
                 <span
                   key={currentIndex}
                   className="animate-float-emoji absolute -top-6 right-4 text-2xl"
                 >
                   👏
+                </span>
+              )}
+              {feedback && isCorrectChoice && !feedback.correct && (
+                <span
+                  key={currentIndex}
+                  className="animate-float-emoji absolute -top-6 right-4 text-2xl"
+                >
+                  ✅
                 </span>
               )}
               {feedback && isWrongSelected && (
